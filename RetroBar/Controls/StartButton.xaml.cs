@@ -308,6 +308,17 @@ namespace RetroBar.Controls
             }
         }
 
+        public void UpdateFloatingStartVisible(bool visible)
+        {
+            if (floatingStartButton == null || visible)
+            {
+                Opacity = 1;
+                return;
+            }
+
+            Opacity = 0;
+        }
+
         #endregion
     }
 }
