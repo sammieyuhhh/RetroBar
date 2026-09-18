@@ -73,7 +73,7 @@ namespace RetroBar
 
             _maximizedWindowTimer = new DispatcherTimer
             {       
-            Interval = TimeSpan.FromMilliseconds(250)
+            Interval = TimeSpan.FromMilliseconds(100)
             };
 
             _maximizedWindowTimer.Tick += MaximizedWindowTimer_Tick;
