@@ -11,7 +11,11 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
+using System.Windows.Threading;
 using Application = System.Windows.Application;
+
 
 namespace RetroBar
 {
@@ -20,6 +24,14 @@ namespace RetroBar
     /// </summary>
     public partial class Taskbar : AppBarWindow
     {
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern bool IsZoomed(IntPtr hWnd);
+
+        private DispatcherTimer _maximizedWindowTimer;
+        private bool _taskbarIsBlack;
         public bool IsLocked => Settings.Instance.LockTaskbar;
 
         public bool IsScaled => DpiScale > 1 || Settings.Instance.TaskbarScale > 1;
@@ -58,9 +70,17 @@ namespace RetroBar
             this.hotkeyManager = hotkeyManager;
 
             InitializeComponent();
+
+            _maximizedWindowTimer = new DispatcherTimer
+            {       
+            Interval = TimeSpan.FromMilliseconds(250)
+            };
+
+            _maximizedWindowTimer.Tick += MaximizedWindowTimer_Tick;
+            _maximizedWindowTimer.Start();
+
             DataContext = _shellManager;
             StartButton.StartMenuMonitor = startMenuMonitor;
-
             RecalculateSize(false);
 
             AllowsTransparency = mode == AppBarMode.AutoHide || (Application.Current.FindResource("AllowsTransparency") as bool? ?? false);
@@ -234,6 +254,51 @@ namespace RetroBar
             }
         }
 
+                private void MaximizedWindowTimer_Tick(object sender, EventArgs e)
+        {
+            IntPtr foregroundWindow = GetForegroundWindow();
+
+            if (foregroundWindow == IntPtr.Zero)
+            {
+                SetTaskbarMaximizedState(false);
+                return;
+            }
+
+            IntPtr taskbarWindow = new WindowInteropHelper(this).Handle;
+
+            // Ignore RetroBar itself.
+            if (taskbarWindow != IntPtr.Zero && foregroundWindow == taskbarWindow)
+            {
+                return;
+            }
+
+            SetTaskbarMaximizedState(IsZoomed(foregroundWindow));
+        }
+
+        private void SetTaskbarMaximizedState(bool maximized)
+        {
+            if (_taskbarIsBlack == maximized)
+            {
+                return;
+            }
+
+            _taskbarIsBlack = maximized;
+
+            if (maximized)
+            {
+                TaskbarContentControl.Resources["TaskbarBackground"] =
+                    new SolidColorBrush(Colors.Black);
+
+                TaskbarContentControl.Resources["TaskbarVerticalBackground"] =
+                    new SolidColorBrush(Colors.Black);
+            }
+            else
+            {
+                TaskbarContentControl.Resources.Remove("TaskbarBackground");
+                TaskbarContentControl.Resources.Remove("TaskbarVerticalBackground");
+            }
+        }
+
         #region AppBarWindow overrides
         protected override void OnSourceInitialized(object sender, EventArgs e)
         {
@@ -266,6 +331,15 @@ namespace RetroBar
         }
 
         protected override void CustomClosing()
+        {
+    if (_maximizedWindowTimer != null)
+    {
+        _maximizedWindowTimer.Stop();
+        _maximizedWindowTimer.Tick -= MaximizedWindowTimer_Tick;
+        _maximizedWindowTimer = null;
+    }
+
+    if (AllowClose)
         {
             if (AllowClose)
             {
