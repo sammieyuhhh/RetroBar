@@ -10,7 +10,7 @@
     <Thickness x:Key="TaskButtonMargin" Right="2" />
     <FontWeight x:Key="SetTimeMenuItemWeight">Normal</FontWeight>
 
-    <LinearGradientBrush x:Key="TaskbarBackground"
+    <LinearGradientBrush x:Key="TaskbarAeroBackground"
                          MappingMode="Absolute"
                          StartPoint="0,0"
                          EndPoint="0,26">
@@ -23,6 +23,10 @@
         <GradientStop Color="#a2000000"
                       Offset="1.0" />
     </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="TaskbarMaximizedBackground"
+                     Color-"#FF000000"  />
+
     <LinearGradientBrush x:Key="TaskbarVerticalBackground"
                          StartPoint="0,0"
                          EndPoint="1,0">
