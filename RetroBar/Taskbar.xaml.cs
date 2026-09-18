@@ -1,4 +1,4 @@
-﻿using ManagedShell;
+using ManagedShell;
 using ManagedShell.AppBar;
 using ManagedShell.Common.Helpers;
 using ManagedShell.Common.Logging;
@@ -59,7 +59,7 @@ namespace RetroBar
         public WindowManager windowManager;
         public HotkeyManager hotkeyManager;
 
-        public Taskbar(WindowManager windowManager, DictionaryManager dictionaryManager, ShellManager shellManager, StartMenuMonitor startMenuMonitor, Updater updater, HotkeyManager hotkeyManager, AppBarScreen screen, AppBarEdge edge, AppBarMode mode)
+        public Taskbar(WindowManager windowManager, DictionaryManager dictionaryManager, ShellManager shellManager, StartMenuMonitor startMenuMonitor, Updater updater, HotkeyManager hotkeyManager,[...]
             : base(shellManager.AppBarManager, shellManager.ExplorerHelper, shellManager.FullScreenHelper, screen, edge, mode, 0)
         {
             _dictionaryManager = dictionaryManager;
@@ -254,14 +254,13 @@ namespace RetroBar
             }
         }
 
-                private void MaximizedWindowTimer_Tick(object sender, EventArgs e)
+        private bool IsForegroundWindowMaximizedOnThisScreen()
         {
             IntPtr foregroundWindow = GetForegroundWindow();
 
             if (foregroundWindow == IntPtr.Zero)
             {
-                SetTaskbarMaximizedState(false);
-                return;
+                return false;
             }
 
             IntPtr taskbarWindow = new WindowInteropHelper(this).Handle;
@@ -269,10 +268,29 @@ namespace RetroBar
             // Ignore RetroBar itself.
             if (taskbarWindow != IntPtr.Zero && foregroundWindow == taskbarWindow)
             {
-                return;
+                return false;
             }
 
-            SetTaskbarMaximizedState(IsZoomed(foregroundWindow));
+            try
+            {
+                System.Windows.Forms.Screen foregroundScreen = System.Windows.Forms.Screen.FromHandle(foregroundWindow);
+
+                if (foregroundScreen == null || foregroundScreen.DeviceName != Screen.DeviceName)
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return IsZoomed(foregroundWindow);
+        }
+
+        private void MaximizedWindowTimer_Tick(object sender, EventArgs e)
+        {
+            SetTaskbarMaximizedState(IsForegroundWindowMaximizedOnThisScreen());
         }
 
         private void SetTaskbarMaximizedState(bool maximized)
@@ -498,7 +516,7 @@ namespace RetroBar
             PropertiesWindow.Open(_shellManager.NotificationArea, _dictionaryManager, Screen, DpiScale, Orientation == Orientation.Horizontal ? DesiredHeight : DesiredWidth);
         }
 
-        private void ExitMenuItem_OnClick(object sender, RoutedEventArgs e)
+        private void ExitMenuItem_OnClick(object sender, EventArgs e)
         {
             ((App)Application.Current).ExitGracefully();
         }
