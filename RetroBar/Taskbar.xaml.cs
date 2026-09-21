@@ -294,6 +294,15 @@ namespace RetroBar
 
         private bool IsForegroundWindowMaximizedOnThisScreen()
         {
+            // Borderless/exclusive fullscreen apps (games, video players, F11 browsers)
+            // don't set WS_MAXIMIZE, so IsZoomed alone would miss them entirely.
+            // Reuse the same FullScreenHelper-backed check the auto-hide logic already
+            // uses, so a real fullscreen app on this screen counts the same as maximized.
+            if (HasFullScreenApp())
+            {
+                return true;
+            }
+
             IntPtr foregroundWindow = GetForegroundWindow();
 
             if (foregroundWindow == IntPtr.Zero)
