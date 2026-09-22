@@ -1,4 +1,5 @@
     <FontFamily x:Key="GlobalFontFamily">Microsoft Sans Serif</FontFamily>
+
 <!-- Windows ME is sourcing and inheriting through Windows 2000, there would be a way to fix that -->
     <Style TargetType="Button"
            x:Key="NotifyBalloonCloseButton"
