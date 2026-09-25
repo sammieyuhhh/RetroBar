@@ -31,6 +31,7 @@ namespace RetroBar
         private static extern bool IsZoomed(IntPtr hWnd);
 
         private DispatcherTimer _maximizedWindowTimer;
+        private IntPtr _taskbarWindowHandle;
 
         public static readonly DependencyProperty IsFullscreenWindowMaximizedProperty =
             DependencyProperty.Register("IsFullscreenWindowMaximized", typeof(bool), typeof(Taskbar),
@@ -310,10 +311,8 @@ namespace RetroBar
                 return false;
             }
 
-            IntPtr taskbarWindow = new WindowInteropHelper(this).Handle;
-
             // Ignore RetroBar itself.
-            if (taskbarWindow != IntPtr.Zero && foregroundWindow == taskbarWindow)
+            if (_taskbarWindowHandle != IntPtr.Zero && foregroundWindow == _taskbarWindowHandle)
             {
                 return false;
             }
@@ -344,6 +343,8 @@ namespace RetroBar
         protected override void OnSourceInitialized(object sender, EventArgs e)
         {
             base.OnSourceInitialized(sender, e);
+
+            _taskbarWindowHandle = new WindowInteropHelper(this).Handle;
 
             SetLayoutRounding();
             SetBlur(AllowsBlur());
